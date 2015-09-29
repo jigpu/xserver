@@ -74,6 +74,7 @@ struct xwl_screen {
     struct wl_compositor *compositor;
     struct wl_shm *shm;
     struct wl_shell *shell;
+    struct wl_tablet_manager *tablet_manager;
 
     uint32_t serial;
 
@@ -117,6 +118,9 @@ struct xwl_seat {
     DeviceIntPtr pointer;
     DeviceIntPtr keyboard;
     DeviceIntPtr touch;
+    DeviceIntPtr stylus;
+    DeviceIntPtr eraser;
+    DeviceIntPtr puck;
     struct xwl_screen *xwl_screen;
     struct wl_seat *seat;
     struct wl_pointer *wl_pointer;

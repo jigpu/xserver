@@ -203,6 +203,64 @@ xwl_touch_proc(DeviceIntPtr device, int what)
 #undef NTOUCHPOINTS
 }
 
+static int
+xwl_tablet_proc(DeviceIntPtr device, int what)
+{
+#define NBUTTONS 9
+#define NAXES 6
+    struct xwl_seat *xwl_seat = device->public.devicePrivate;
+    Atom btn_labels[NBUTTONS] = { 0 };
+    Atom axes_labels[NAXES] = { 0 };
+    BYTE map[NBUTTONS + 1] = { 0 };
+
+    switch (what) {
+    case DEVICE_INIT:
+        device->public.on = FALSE;
+
+        axes_labels[0] = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_X);
+        axes_labels[1] = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_Y);
+        axes_labels[2] = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_PRESSURE);
+        axes_labels[3] = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_X);
+        axes_labels[4] = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_TILT_Y);
+        axes_labels[5] = XIGetKnownProperty(AXIS_LABEL_PROP_ABS_WHEEL);
+
+        if (!InitValuatorClassDeviceStruct(device, NAXES, axes_labels,
+                                           GetMotionHistorySize(), Absolute))
+            return BadValue;
+
+        if (!InitButtonClassDeviceStruct(device, NBUTTONS, btn_labels, map))
+            return BadValue;
+
+        /* Valuators */
+        InitValuatorAxisStruct(device, 0, axes_labels[0],
+                               0, 262143, 10000, 0, 10000, Absolute);
+        InitValuatorAxisStruct(device, 1, axes_labels[1],
+                               0, 262143, 10000, 0, 10000, Absolute);
+        InitValuatorAxisStruct(device, 2, axes_labels[2],
+                               0, 2048, 1, 0, 1, Absolute);
+        InitValuatorAxisStruct(device, 3, axes_labels[3],
+                               -64, 63, 57, 0, 57, Absolute);
+        InitValuatorAxisStruct(device, 4, axes_labels[4],
+                               -64, 63, 57, 0, 57, Absolute);
+        InitValuatorAxisStruct(device, 5, axes_labels[5],
+                               -900, 899, 1, 0, 1, Absolute);
+        return Success;
+
+    case DEVICE_ON:
+        device->public.on = TRUE;
+        return Success;
+
+    case DEVICE_OFF:
+    case DEVICE_CLOSE:
+        device->public.on = FALSE;
+        return Success;
+    }
+
+    return BadMatch;
+#undef NAXES
+#undef NBUTTONS
+}
+
 static void
 pointer_handle_enter(void *data, struct wl_pointer *pointer,
                      uint32_t serial, struct wl_surface *surface,
@@ -658,6 +716,155 @@ static const struct wl_touch_listener touch_listener = {
     touch_handle_cancel
 };
 
+static void
+tablet_handle_proximity_in(void *data, struct wl_tablet *tablet,
+                           uint32_t serial, uint32_t time,
+                           struct wl_tablet_tool *tool,
+                           struct wl_surface *surface)
+{
+    return;
+}
+
+static void
+tablet_handle_proximity_out(void *data, struct wl_tablet *tablet,
+                            uint32_t time)
+{
+    return;
+}
+
+static void
+tablet_handle_motion(void *data, struct wl_tablet *wl_tablet,
+                     uint32_t time, wl_fixed_t sx_w, wl_fixed_t sy_w)
+{
+    return;
+}
+
+static void
+tablet_handle_down(void *data, struct wl_tablet *tablet,
+                   uint32_t serial, uint32_t time)
+{
+    return;
+}
+
+static void
+tablet_handle_up(void *data, struct wl_tablet *tablet,
+                 uint32_t time)
+{
+    return;
+}
+
+static void
+tablet_handle_pressure(void *data, struct wl_tablet *wl_tablet,
+                       uint32_t time, wl_fixed_t pressure)
+{
+    return;
+}
+
+static void
+tablet_handle_distance(void *data, struct wl_tablet *wl_tablet,
+                       uint32_t time, wl_fixed_t distance)
+{
+    return;
+}
+
+static void
+tablet_handle_tilt(void *data, struct wl_tablet *wl_tablet,
+                   uint32_t time, wl_fixed_t tilt_x, wl_fixed_t tilt_y)
+{
+    return;
+}
+
+static void
+tablet_handle_button(void *data, struct wl_tablet *tablet,
+                     uint32_t serial, uint32_t time,
+                     uint32_t button, uint32_t state)
+{
+    return;
+}
+
+static void
+tablet_handle_frame(void *data, struct wl_tablet *tablet)
+{
+    return;
+}
+
+static void
+tablet_handle_removed(void *data, struct wl_tablet *tablet)
+{
+    return;
+}
+
+static const struct wl_tablet_listener tablet_listener = {
+    tablet_handle_proximity_in,
+    tablet_handle_proximity_out,
+    tablet_handle_motion,
+    tablet_handle_down,
+    tablet_handle_up,
+    tablet_handle_pressure,
+    tablet_handle_distance,
+    tablet_handle_tilt,
+    tablet_handle_button,
+    tablet_handle_frame,
+    tablet_handle_removed
+};
+
+static void
+tablet_manager_handle_device_added(void *data,
+                                   struct wl_tablet_manager *wl_tablet_manager,
+                                   struct wl_tablet *tablet, char *name,
+                                   uint32_t vid, uint32_t pid,
+                                   uint32_t type) {
+    /* TODO: Implement!
+     *
+     *  - Wire it up to tablet_listener
+     *  - Possibly stuff the wl_tablet somewhere if we need it later?
+     *  - Ignore the name, vid, pid, and type for the moment since they
+     *    shouldn't actually be exposed through the X device IIRC...
+     */
+    return;
+}
+
+static void
+tablet_manager_handle_tool_added(void *data,
+                                 struct wl_tablet_manager *wl_tablet_manager,
+                                 struct wl_tablet_tool *tool,
+                                 struct wl_tablet *tablet,
+                                 uint32_t tool_type,
+                                 uint32_t tool_serial,
+                                 uint32_t extra_axes) {
+    /* TODO: Implement!
+     *
+     *  - Possibly wire it up to a listener? Only event it sends is
+     *    "removed" :|
+     *  - Possibly stuff the tool somewhere if we need it later?
+     *  - Ignore the tool_type and tool_serial for the moment since
+     *    they're explicitly out-of-scope for the moment.
+     *  - The extra_axes might have useful/fun info, but I'll have
+     *    to peek at the libinput implementation to be sure...
+     */
+    return;
+}
+
+static void
+tablet_manager_handle_seat(void *data,
+                           struct wl_tablet_manager *wl_tablet_manager,
+                           struct wl_seat *seat) {
+    /* TODO: NUKE!
+     *
+     * ... This shouldn't exist when the tablet protocol is merged
+     * into Wayland, but is a necessary part of the protocol while
+     * living as an extension inside mutter/Weston where we need
+     * some way to find the reference back to the seat...
+     */
+     return;
+}
+
+static const struct wl_tablet_manager_listener tablet_manager_listener = {
+    tablet_manager_handle_device_added,
+    tablet_manager_handle_tool_added,
+    tablet_manager_handle_seat
+};
+
 static DeviceIntPtr
 add_device(struct xwl_seat *xwl_seat,
            const char *driver, DeviceProc device_proc)
@@ -745,6 +952,49 @@ seat_handle_capabilities(void *data, struct wl_seat *seat,
             DisableDevice(xwl_seat->touch, TRUE);
     }
 
+    /* TODO: Swap over from using the wl_tablet_manager contained in
+     * the global object registry to one exposed through the wl_seat
+     * interface (see the 'input_handler' function below for more
+     * details).
+     */
+#if 0
+    if (caps & WL_SEAT_CAPABILITY_TABLET && xwl_seat->wl_tablet_manager == NULL) {
+        xwl_seat->wl_tablet_manager = wl_seat_get_tablet_manager(seat);
+        wl_tablet_add_listener(xwl_seat->wl_tablet_manager,
+                               &tablet_manager_listener, xwl_seat);
+
+        if (xwl_seat->stylus)
+            EnableDevice(xwl_seat->stylus, TRUE);
+        else {
+            xwl_seat->stylus =
+                add_device(xwl_seat, "xwayland-stylus", xwl_tablet_proc);
+        }
+
+        if (xwl_seat->eraser)
+            EnableDevice(xwl_seat->eraser, TRUE);
+        else {
+            xwl_seat->eraser =
+                add_device(xwl_seat, "xwayland-eraser", xwl_tablet_proc);
+        }
+
+        if (xwl_seat->puck)
+            EnableDevice(xwl_seat->puck, TRUE);
+        else {
+            xwl_seat->puck =
+                add_device(xwl_seat, "xwayland-cursor", xwl_tablet_proc);
+        }
+    } else if (!(caps & WL_SEAT_CAPABILITY_TABLET) && xwl_seat->wl_tablet_manager) {
+        xwl_seat->wl_tablet_manager = NULL;
+
+        if (xwl_seat->stylus)
+            DisableDevice(xwl_seat->stylus, TRUE);
+        if (xwl_seat->eraser)
+            DisableDevice(xwl_seat->eraser, TRUE);
+        if (xwl_seat->puck)
+            DisableDevice(xwl_seat->puck, TRUE);
+    }
+#endif
+
     xwl_seat->xwl_screen->expecting_event--;
 }
 
@@ -786,6 +1036,18 @@ create_input_device(struct xwl_screen *xwl_screen, uint32_t id, uint32_t version
     xorg_list_init(&xwl_seat->touches);
 }
 
+static void
+create_tablet_device(struct xwl_screen *xwl_screen, uint32_t id, uint32_t version)
+{
+    xwl_screen->tablet_manager = wl_registry_bind(xwl_screen->registry,
+                                                  id,
+                                                  &wl_tablet_manager_interface, min(version, 5));
+
+    ErrorF("xwayland: create_tablet_device\n");
+    wl_tablet_manager_add_listener(xwl_screen->tablet_manager,
+                                   &tablet_manager_listener, xwl_screen);
+}
+
 void
 xwl_seat_destroy(struct xwl_seat *xwl_seat)
 {
@@ -810,9 +1072,27 @@ input_handler(void *data, struct wl_registry *registry, uint32_t id,
               const char *interface, uint32_t version)
 {
     struct xwl_screen *xwl_screen = data;
+    ErrorF("xwayland: notified of interface %s (ver %d)\n", interface, version);
 
     if (strcmp(interface, "wl_seat") == 0 && version >= 3) {
         create_input_device(xwl_screen, id, version);
+        xwl_screen->expecting_event++;
+    }
+
+    /* TODO: The wl_tablet_manager object should be made available
+     * through the wl_seat interface just like wl_pointer, wl_keyboard,
+     * and wl_touch. Lyude has a Wayland branch which includes the
+     * necessary modifications, but for it to work properly also
+     * requires that the compositor (Weston, mutter, etc.) actually
+     * expose the wl_tablet_manager through it :P
+     *
+     * Getting the wl_tablet_manager here instead is only a small
+     * change from what we'd eventually want to upstream; all the
+     * logic of what to do with the events from it and the tablets
+     * is unchanged regardless of where we obtain a reference.
+     */
+    if (strcmp(interface, "wl_tablet_manager") == 0) {
+        create_tablet_device(xwl_screen, id, version);
         xwl_screen->expecting_event++;
     }
 }
