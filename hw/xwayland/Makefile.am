@@ -28,11 +28,18 @@ Xwayland_LDADD =				\
 	$(XSERVER_SYS_LIBS)
 Xwayland_LDFLAGS = $(LD_EXPORT_SYMBOLS_FLAG)
 
+nodist_Xwayland_SOURCES =			\
+	wayland-tablet-protocol.c		\
+	wayland-tablet-client-protocol.h
+
+CLEANFILES = $(nodist_Xwayland_SOURCES)
+
+xwayland-input.c : $(nodist_Xwayland_SOURCES)
 
 if GLAMOR_EGL
 Xwayland_SOURCES += xwayland-glamor.c
 
-nodist_Xwayland_SOURCES =			\
+nodist_Xwayland_SOURCES +=			\
 	drm-client-protocol.h			\
 	drm-protocol.c
 
@@ -46,7 +53,7 @@ Xwayland_LDADD += $(GLAMOR_LIBS) $(GBM_LIBS) -lEGL -lGL
 Xwayland_DEPENDENCIES = $(glamor_lib)
 endif
 
-EXTRA_DIST = drm.xml
+EXTRA_DIST = drm.xml wayland-tablet.xml
 
 
 relink:
