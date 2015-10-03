@@ -822,6 +822,7 @@ tablet_manager_handle_device_added(void *data,
      *  - Ignore the name, vid, pid, and type for the moment since they
      *    shouldn't actually be exposed through the X device IIRC...
      */
+    ErrorF("xwayland: tablet_manager_device_added: ENTER\n");
     return;
 }
 
@@ -843,6 +844,7 @@ tablet_manager_handle_tool_added(void *data,
      *  - The extra_axes might have useful/fun info, but I'll have
      *    to peek at the libinput implementation to be sure...
      */
+    ErrorF("xwayland: tablet_manager_tool_added: ENTER\n");
     return;
 }
 
@@ -857,6 +859,7 @@ tablet_manager_handle_seat(void *data,
      * living as an extension inside mutter/Weston where we need
      * some way to find the reference back to the seat...
      */
+     ErrorF("xwayland: tablet_manager_handle_seat: ENTER\n");
      return;
 }
 
@@ -1040,13 +1043,17 @@ create_input_device(struct xwl_screen *xwl_screen, uint32_t id, uint32_t version
 static void
 create_tablet_device(struct xwl_screen *xwl_screen, uint32_t id, uint32_t version)
 {
+    ErrorF("xwayland: create_tablet_device: ENTER\n");
+    ErrorF("xwayland: create_tablet_device: find tablet manager\n");
     xwl_screen->tablet_manager = wl_registry_bind(xwl_screen->registry,
                                                   id,
-                                                  &wl_tablet_manager_interface, min(version, 5));
+                                                  &wl_tablet_manager_interface, min(version, 1));
 
-    ErrorF("xwayland: create_tablet_device\n");
+    ErrorF("xwayland: create_tablet_device: create_tablet_device\n");
     wl_tablet_manager_add_listener(xwl_screen->tablet_manager,
                                    &tablet_manager_listener, xwl_screen);
+    ErrorF("xwayland: create_tablet_device: listener added\n");
+    ErrorF("xwayland: create_tablet_device: EXIT\n");
 }
 
 void
@@ -1073,7 +1080,7 @@ input_handler(void *data, struct wl_registry *registry, uint32_t id,
               const char *interface, uint32_t version)
 {
     struct xwl_screen *xwl_screen = data;
-    ErrorF("xwayland: notified of interface %s (ver %d)\n", interface, version);
+    ErrorF("xwayland: input_handler: notified of interface %s (ver %d)\n", interface, version);
 
     if (strcmp(interface, "wl_seat") == 0 && version >= 3) {
         create_input_device(xwl_screen, id, version);
@@ -1094,7 +1101,15 @@ input_handler(void *data, struct wl_registry *registry, uint32_t id,
      */
     if (strcmp(interface, "wl_tablet_manager") == 0) {
         create_tablet_device(xwl_screen, id, version);
-        xwl_screen->expecting_event++;
+
+        /* TODO: Figure out what this line is supposed to do. Its
+         * used by the "wl_seat" block above, but when I uncomment
+         * it here, it just causes the server to freeze :(
+         *
+         * On the up-side, leaving it uncommented doesn't seem to
+         * stop Xwayland from getting events from the tablet manager...
+         */
+        //xwl_screen->expecting_event++;
     }
 }
 
