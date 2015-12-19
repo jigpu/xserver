@@ -139,6 +139,19 @@ struct xwl_seat {
     size_t keymap_size;
     char *keymap;
     struct wl_surface *keyboard_focus;
+
+    struct xorg_list tablets;
+    struct xorg_list tablet_tools;
+};
+
+struct xwl_tablet {
+    struct xorg_list link;
+    struct zwp_tablet1 *tablet;
+};
+
+struct xwl_tablet_tool {
+    struct xorg_list link;
+    struct zwp_tablet_tool1 *tool;
 };
 
 struct xwl_output {
