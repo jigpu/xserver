@@ -1006,7 +1006,7 @@ add_device(struct xwl_seat *xwl_seat,
 {
     DeviceIntPtr dev = NULL;
     static Atom type_atom;
-    char name[32];
+    char name[64];
 
     dev = AddInputDevice(serverClient, device_proc, TRUE);
     if (dev == NULL)
