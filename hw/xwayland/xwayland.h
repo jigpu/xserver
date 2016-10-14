@@ -203,6 +203,8 @@ struct xwl_tablet_tool {
     struct xorg_list link;
     struct zwp_tablet_tool_v2 *tool;
     DeviceIntPtr xdevice;
+    Bool in_prox;
+    uint32_t type;
     uint32_t x;
     uint32_t y;
     float pressure;
