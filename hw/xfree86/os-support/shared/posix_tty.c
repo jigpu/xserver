@@ -394,6 +394,9 @@ xf86WaitForInput(int fd, int timeout)
     poll_fd.fd = fd;
     poll_fd.events = POLLIN;
 
+    /* round up microseconds to milliseconds */
+    timeout = (timeout + 999) / 1000;
+
     if (fd >= 0) {
         SYSCALL(r = xserver_poll(&poll_fd, 1, timeout));
     }
